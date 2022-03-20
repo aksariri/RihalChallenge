@@ -1,0 +1,152 @@
+﻿@page "/students"
+
+@using RihalChallenge.Data
+@using RihalChallenge.VModel
+@inject RihalChallenge.Services.StudentServices.IStudentsServices _studentsServices
+@inject RihalChallenge.Services.ClassesServices.IClassesServices _classesServices
+@inject RihalChallenge.Services.CountriesServices.ICountriesServices _countriesServices
+@inject MudBlazor.ISnackbar _snackbar
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Students Information</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTextField @bind-Value="students.name" Label="Student Name" Variant="Variant.Outlined" Margin="Margin.Normal"></MudTextField>
+        <MudSelect T="int" Label="Class" Variant="Variant.Outlined" @bind-Value="class_Id">
+            @foreach (var item in _classes)
+            {
+                <MudSelectItem Value="@item.id">@item.name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudSelect T="int" Label="Country" Variant="Variant.Outlined" @bind-Value="country_Id">
+            @foreach (var item in _countries)
+            {
+                <MudSelectItem Value="@item.id">@item.name</MudSelectItem>
+            }
+        </MudSelect>
+        <MudDatePicker Label="Birth Date" @bind-Date="students.date_of_birth" DisableToolbar="true" />
+        <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="addedditDatastudents">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="deleteDatastudents">delete</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Transparent" OnClick="postRandomSeedDataFaker">Randomm Seed Data</MudButton>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">List of students</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Elevation="25" Items="GetListofstudents()" Filter="new Func<studentsVM, bool>(Search)" @bind-customer="students">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Students</MudText>
+                <MudToolBarSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search for students..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Class Name</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.id</MudTd>
+                <MudTd DataLabel="Student Name">@context.name</MudTd>
+                <MudTd DataLabel="Classe Name">@context.date_of_birth.Value.ToShortDateString()</MudTd>
+                <MudTd DataLabel="Classe Name">@context.countries.name</MudTd>
+                <MudTd DataLabel="Classe Name">@context.classes.name</MudTd>
+                <MudTd DataLabel="">
+                    <MudFab @onclick="@(() => Edit(@context.id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                    <MudFab @onclick="@(() => Delete(@context, "DELTED"))" Color="Color.Secondary" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20, 50 }" />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    public int country_Id;
+    public int class_Id;
+    public string oman = "Oman";
+    private string searchString = "";
+    private string searchString1 = "";
+    public students students = new();
+    public studentsVM _studentsvm = new();
+    public List<studentsVM> _students = new();
+    public List<classes> _classes = new List<classes>();
+    public List<countries> _countries = new List<countries>();
+    protected override async Task OnInitializedAsync()
+    {
+        GetListofstudents();
+        GetListofClasses();
+        GetListofCountries();
+        country_Id = _countries.Find(xx => xx.name == "Oman").id;
+        class_Id = _classes.FirstOrDefault().id;
+    }
+
+    public List<countries> GetListofCountries()
+    {
+        _countries = _countriesServices.GetListofcountries();
+        return _countries;
+    }
+    public List<classes> GetListofClasses()
+    {
+        _classes = _classesServices.GetListofClasses();
+        return _classes;
+    }
+    public async Task<bool> addedditDatastudents()
+    {
+        students.country_Id = country_Id;
+        students.class_Id = class_Id;
+        return await _studentsServices.addedditdeleteDatastudents(students, "EDIT");
+    }
+    public async Task<bool> deleteDatastudents()
+    {
+        return await _studentsServices.addedditdeleteDatastudents(students, "DELTED");
+    }
+    private void Edit(int Student_Id)
+    {
+        students = (from s in _students where s.id == Student_Id
+                    select new students
+                    {
+                        id = s.id,
+                        name = s.name,
+                        class_Id = s.classes.id,
+                        country_Id = s.countries.id,
+                        date_of_birth = s.date_of_birth
+                    }).FirstOrDefault();
+    }
+    public async Task<bool> Delete(studentsVM _students, string code)
+    {
+        students.id = _students.id;
+        return await _studentsServices.addedditdeleteDatastudents(students, code);
+    }
+    public async Task<bool> postRandomSeedDataFaker()
+    {
+        return await _studentsServices.postRandomSeedDataFaker();
+    }
+    public List<studentsVM> GetListofstudents()
+    {
+        _students = _studentsServices.GetListofstudents();
+        return _students;
+    }
+
+    private bool Search(studentsVM students) => _Search(students, searchString);
+
+    private bool _Search(studentsVM students, string searchString1)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (students.name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+}

@@ -1,0 +1,104 @@
+﻿@page "/classes"
+
+@using RihalChallenge.Data
+@inject RihalChallenge.Services.ClassesServices.IClassesServices _classesServices
+@inject MudBlazor.ISnackbar _snackbar
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Students Information</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTextField @bind-Value="classes.name" Label="Classe Name" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+
+        <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="addedditDataClasses">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="deleteDataClasses">delete</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Transparent" OnClick="postRandomSeedDataFaker">Randomm Seed Data</MudButton>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">List of Classes</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Elevation="25" Items="GetListofClasses()" Filter="new Func<classes, bool>(Search)" @bind-customer="classes">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Students</MudText>
+                <MudToolBarSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search for Classes..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Class Name</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.id</MudTd>
+                <MudTd DataLabel="Student Name">@context.name</MudTd>
+                <MudTd DataLabel="">
+                    <MudFab @onclick="@(() => Edit(@context.id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                    <MudFab @onclick="@(() => Delete(@context, "DELTED"))" Color="Color.Secondary" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20, 50 }" />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private string searchString = "";
+    private string searchString1 = "";
+    public classes classes = new();
+    public List<classes> _classes = new();
+    protected override async Task OnInitializedAsync()
+    {
+        GetListofClasses();
+    }
+
+
+    public async Task<bool> addedditDataClasses()
+    {
+        return await _classesServices.addedditdeleteDataClasses(classes, "EDIT");
+    }
+    public async Task<bool> deleteDataClasses()
+    {
+        return await _classesServices.addedditdeleteDataClasses(classes, "DELTED");
+    }
+    private void Edit(int Class_Id)
+    {
+        classes = _classes.FirstOrDefault(xx => xx.id == Class_Id);
+    }
+    public async Task<bool> Delete(classes classes, string code)
+    {
+        return await _classesServices.addedditdeleteDataClasses(classes, code);
+    }
+    public async Task<bool> postRandomSeedDataFaker()
+    {
+        return await _classesServices.postRandomSeedDataFaker();
+    }
+    public List<classes> GetListofClasses()
+    {
+        _classes = _classesServices.GetListofClasses();
+        return _classes;
+    }
+
+    private bool Search(classes classes) => _Search(classes, searchString);
+
+    private bool _Search(classes classes, string searchString1)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (classes.name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+}

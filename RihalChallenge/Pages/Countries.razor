@@ -1,0 +1,104 @@
+﻿@page "/countries"
+
+@using RihalChallenge.Data
+@inject RihalChallenge.Services.CountriesServices.ICountriesServices _countriesServices
+@inject MudBlazor.ISnackbar _snackbar
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">Students Information</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTextField @bind-Value="countries.name" Label="Classe Name" Variant="Variant.Text" Margin="Margin.Normal"></MudTextField>
+
+        <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="addedditDatacountries">Save</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Warning" OnClick="deleteDatacountries">delete</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Transparent" OnClick="postRandomSeedDataFaker">Randomm Seed Data</MudButton>
+    </MudCardContent>
+</MudCard>
+
+<MudCard Elevation="25">
+    <MudCardHeader>
+        <CardHeaderContent>
+            <MudText Typo="Typo.h6">List of Classes</MudText>
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent>
+        <MudTable Elevation="25" Items="GetListofClasses()" Filter="new Func<countries, bool>(Search)" @bind-customer="countries">
+            <ToolBarContent>
+                <MudText Typo="Typo.h6">Students</MudText>
+                <MudToolBarSpacer />
+                <MudTextField @bind-Value="searchString" Placeholder="Search for Classes..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+            </ToolBarContent>
+            <HeaderContent>
+                <MudTh>Id</MudTh>
+                <MudTh>Class Name</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Id">@context.id</MudTd>
+                <MudTd DataLabel="Student Name">@context.name</MudTd>
+                <MudTd DataLabel="">
+                    <MudFab @onclick="@(() => Edit(@context.id))" Color="Color.Primary" Icon="@Icons.Material.Filled.Edit" Size="Size.Small" IconSize="Size.Small" />
+                    <MudFab @onclick="@(() => Delete(@context, "DELTED"))" Color="Color.Secondary" Icon="@Icons.Material.Filled.Delete" Size="Size.Small" IconSize="Size.Small" />
+                </MudTd>
+            </RowTemplate>
+            <PagerContent>
+                <MudTablePager PageSizeOptions="new int[] { 5, 10, 20, 50 }" />
+            </PagerContent>
+        </MudTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    private string searchString = "";
+    private string searchString1 = "";
+    public countries countries = new();
+    public List<countries> _countries = new();
+    protected override async Task OnInitializedAsync()
+    {
+        GetListofClasses();
+    }
+
+
+    public async Task<bool> addedditDatacountries()
+    {
+        return await _countriesServices.addedditdeleteDatacountries(countries, "EDIT");
+    }
+    public async Task<bool> deleteDatacountries()
+    {
+        return await _countriesServices.addedditdeleteDatacountries(countries, "DELTED");
+    }
+    private void Edit(int Class_Id)
+    {
+        countries = _countries.FirstOrDefault(xx => xx.id == Class_Id);
+    }
+    public async Task<bool> Delete(countries countries, string code)
+    {
+        return await _countriesServices.addedditdeleteDatacountries(countries, code);
+    }
+    public async Task<bool> postRandomSeedDataFaker()
+    {
+        return await _countriesServices.postRandomSeedDataFaker();
+    }
+    public List<countries> GetListofClasses()
+    {
+        _countries = _countriesServices.GetListofcountries();
+        return _countries;
+    }
+
+    private bool Search(countries countries) => _Search(countries, searchString);
+
+    private bool _Search(countries countries, string searchString1)
+    {
+        if (string.IsNullOrWhiteSpace(searchString))
+            return true;
+        if (countries.name.Contains(searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
+    }
+
+}
